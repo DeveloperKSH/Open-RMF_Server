@@ -48,40 +48,30 @@
 ## 🔀 3. 시스템 아키텍처 & 데이터 흐름
 ```mermaid
 flowchart LR
-  %% 서버 영역
-  subgraph Control["Control / Server"]
-    RMFServer["rmf_server (Fleet Manager API)"]
-    RMFWeb["RMF-web (api-server & dashboard)"]
+  subgraph Control["RMF Server"]
+    Core["rmf_core (두뇌: Task 할당 & 경로 계획)"]
+    FleetManager["Fleet Manager (FastAPI API)"]
+    Bridge["Bridges (Socket.IO)"]
+    Panel["Panel API (Flask)"]
   end
 
-  %% 로봇 영역
-  subgraph RobotSide["RobotSide / Client (rmf_robot)"]
+  subgraph UI["Monitoring"]
+    Dashboard["RMF Web Dashboard"]
+    RViz["RMF RViz Visualizer (with Satellite)"]
+  end
+
+  subgraph RobotSide["Robot Clients (rmf_robot)"]
     Adapter["fleet_adapter"]
     FSM["fsm_waypoint_node"]
-    Nav2["navigation2_stack"]
-    Robot["배달로봇"]
   end
 
-  %% 외부 시스템
-  subgraph External["External Systems"]
-    Bridge["MQTT / Socket.IO Bridge"]
-    WS["WebSocket Control"]
-  end
-
-  %% 서버 ↔ 로봇 통신
-  RMFServer -- "PathRequest" --> Adapter
-  Adapter -- "RobotState" --> RMFServer
-
-  %% 로봇단 내부 흐름
-  Adapter --> FSM
-  FSM -->|Action Client| Nav2
-  Nav2 -->|Result / Feedback| FSM
-  Nav2 -->|TF / Odom| Robot
-
-  %% 외부 텔레메트리
-  FSM --> Bridge
-  FSM --> WS
-
-  %% 서버 ↔ 대시보드
-  RMFServer <--> RMFWeb
+  %% 흐름
+  Dashboard --> Panel
+  Panel --> FleetManager
+  FleetManager --> Core
+  Core --> FleetManager
+  FleetManager --> Adapter
+  Adapter --> FleetManager
+  FleetManager --> Bridge --> Dashboard
+  Core --> RViz
   ```
