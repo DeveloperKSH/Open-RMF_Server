@@ -48,38 +48,40 @@
 ## 🔀 3. 시스템 아키텍처 & 데이터 흐름
 ```mermaid
 flowchart LR
-  %% 구역 표시
-  subgraph Control[Control (Server)]
-    RMFServer[rmf_server<br/>(Fleet Manager API)]
-    RMFWeb[RMF-web: api-server & dashboard]
+  %% 서버 영역
+  subgraph Control["Control / Server"]
+    RMFServer["rmf_server (Fleet Manager API)"]
+    RMFWeb["RMF-web (api-server & dashboard)"]
   end
 
-  subgraph RobotSide[RobotSide (Client) — rmf_robot]
-    Adapter[fleet_adapter]
-    FSM[fsm_waypoint_node]
-    Nav2[navigation2_stack]
-    Robot[배달로봇]
+  %% 로봇 영역
+  subgraph RobotSide["RobotSide / Client (rmf_robot)"]
+    Adapter["fleet_adapter"]
+    FSM["fsm_waypoint_node"]
+    Nav2["navigation2_stack"]
+    Robot["배달로봇"]
   end
 
-  subgraph External[External]
-    Bridge[MQTT / Socket.IO Bridge]
-    WS[WebSocket Control]
+  %% 외부 시스템
+  subgraph External["External Systems"]
+    Bridge["MQTT / Socket.IO Bridge"]
+    WS["WebSocket Control"]
   end
 
-  %% 서버 <-> 로봇단 핵심 인터페이스
+  %% 서버 ↔ 로봇 통신
   RMFServer -- "PathRequest" --> Adapter
   Adapter -- "RobotState" --> RMFServer
 
-  %% rmf_robot 내부 흐름(원래 그림과 동일)
+  %% 로봇단 내부 흐름
   Adapter --> FSM
   FSM -->|Action Client| Nav2
   Nav2 -->|Result / Feedback| FSM
   Nav2 -->|TF / Odom| Robot
 
-  %% 외부 텔레메트리(원래 rmf_robot 역할 유지)
+  %% 외부 텔레메트리
   FSM --> Bridge
   FSM --> WS
 
-  %% 서버 대시보드 연동
+  %% 서버 ↔ 대시보드
   RMFServer <--> RMFWeb
   ```
