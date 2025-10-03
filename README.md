@@ -89,7 +89,7 @@ flowchart LR
   panel -->|TaskReq| rmfcore
   rmfcore -->|Status / Summaries| panel
 
-  rmfcore -->|ROS Topics| rviz   
+  rmfcore -->|ROS Topics: Map / TF / Trajectory / Markers| rviz
 
   %% ---------- Server ↔ External ----------
   rmfcore -->|ROS Topics: robot / fleet / task| bridge
