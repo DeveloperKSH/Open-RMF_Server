@@ -1,84 +1,72 @@
-## container 없이 실행
-```bash
-# api-server 실행
-docker run \
-   --network host \
-   -it --rm \
-   -e ROS_DOMAIN_ID=3 \
-   -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
-   ghcr.io/open-rmf/rmf-web/api-server:latest
-# dashboard frontend 실행
-docker run \
-   --network host -it --rm \
-   -e RMF_SERVER_URL=http://localhost:8000 \
-   -e TRAJECTORY_SERVER_URL=ws://localhost:8006 \
-   ghcr.io/open-rmf/rmf-web/dashboard:latest
+# RMF Server (Fleet Management & Coordination)
 
-# rviz를 포함한 office 런치 파일 실행
-export ROS_DOMAIN_ID=3 &&
-ros2 launch rmf_demos office.launch.xml \
-  server_uri:="ws://localhost:8000/_internal" \
-  use_sim_time:=False \
-  headless:=False
-# fsm_waypoint 실행
-export CONFIG_FILE=/home/bcc/Works1/rmf_demos_server/rmf_demos/config/office/tinyRobot_with_nav2_config.yaml && \
-  colcon build --packages-select fsm_waypoint && \
-  export ROS_DOMAIN_ID=3 && \
-  ros2 run fsm_waypoint fsm_waypoint_node
-```
-## build
-```bash
-docker compose build iron
-docker compose build rmf
-```
-## usage
-```bash
-xhost +
-touch .env
-다음과 같이 작성 123은 예시임
-ROS_DOMAIN_ID=123
-DISPLAY=0
+본 저장소는 **Open-RMF 기반 다중 로봇 관제 시스템**에서 **서버(RMF Server)** 측 코드를 담당하는 패키지 모음입니다.  
 
-docker compose up rmf api dashboard panel
+- **역할**: 다중 로봇의 상태 수집, 작업/경로 분배, 태스크 관리 및 대시보드 연동  
+- **구성**: Fleet Manager(FastAPI API), FSM 기반 Nav2 제어 연동, 브리지(Flask-SocketIO), 패널 API, Traffic Editor, Docker 실행 환경  
+- **활용**: 실내·외 물류 로봇의 중앙 관제 및 다중 로봇 운영 최적화  
 
-# open browser
-# http://localhost:3000/ <= dashboard
-# http://localhost:3001/  <= panel
-# http://localhost:8000/docs/  <= api document
-```
-- rviz_satellite 실행
-1. ros2 launch rviz_satellite demo.launch.xml 실행전 demo.launch.xml에 위경도 입력
-2. aerialmap_display.cpp에서 x_offset, y_offset 입력
-3. gl.rviz 파일에 - /AerialMap1, Class: rviz_satellite/AerialMap 추가
-4. 위경도, x,y_offset은 0.yaml를 보고 참조, 즉 traffic_editor에 vector의 위경도와 build후 생성된 0.yaml를 참조
-5. rviz_satellite 실행
+---
 
-```bash
-## etc
-- 새로운 맵을 만드는 방법
-  - traffic_editor로 vector, floor 등 만든다
-  - rmf_demos_maps/maps/ 원하는 폴더를 만들고 *.building.yaml 저장위치
-  - rmf_demos_dashboard_resources/ 원하는 폴더와 dashboard_config.json, main.json을 타 폴더내용 참고해서 작성할것 후에 rmf-panel-js에서 사용함
-  - rmf_demos/config/ 원하는 폴더에 *_config.yaml 파일작성
-  - rmf_demos/launch/ *.launch.xml 파일작성
+## 📌 1. 필요하게 된 상황
+실외/실내를 오가는 여러 대의 물류 로봇을 효율적으로 관리하려면, 개별 로봇만 잘 움직이는 것만으로는 충분하지 않습니다.  
+- **중앙 관제 서버**가 모든 로봇의 상태를 실시간으로 수집하고, 충돌 없는 경로를 분배해야 함  
+- **웹 대시보드와 연계**하여 운영자가 태스크를 제출하고, 실행 상태를 모니터링해야 함  
+- 실외/실내 환경의 다양한 제약(장애물, 지도, 층간 이동 등)을 고려해야 함  
 
-## task
-```bash
-# tinybot1이 lounge와 coe를 순차적으로 patrol 이동
-ros2 run rmf_demos_tasks dispatch_patrol -F turtlebot3 -R tinybot1 -p lounge coe
+---
 
-# tinybot1이 lounge와 coe를 순차적으로 patrol 2번 반복
-ros2 run rmf_demos_tasks dispatch_patrol -F turtlebot3 -R tinybot1 -p lounge coe -n 2
+## 🔧 2. 시스템 구성
+서버단(RMF Server)은 다음과 같은 주요 구성 요소로 동작합니다:
 
-# task 실행시 id를 사용해서 task 취소
-ros2 run rmf_demos_tasks cancel_task -id patrol_45a22ccc-d625-445b-ab25-7c655aca5e02
+- **Fleet Manager (`rmf_demos_fleet_adapter`)**  
+  - FastAPI 기반 REST API 제공  
+  - 로봇 상태 조회(`/status`), 경로 명령(`/navigate`), 액티비티 실행(`/start_activity`) 등 지원  
+  - 좌표계 변환 및 로봇별 상태 관리  
 
-# rviz_satellite 실행
-ros2 launch rviz_satellite demo.launch.xml
+- **FSM Waypoint (`fsm_waypoint`)**  
+  - Nav2 주행 액션과 RMF 태스크를 연결하는 상태 기계  
+  - 목표 Pose 실행, 취소, 재시작 관리  
 
-# 취소
-export ROS_DOMAIN_ID=13 &&
-ros2 run rmf_demos_tasks cancel_task -id patrol_45a22ccc-d625-445b-ab25-7c655aca5e02
+- **Bridges (`rmf_demos_bridges`)**  
+  - Flask-SocketIO 기반  
+  - ROS2 ↔ 웹 대시보드 간 상태 동기화 (RobotState, TaskSummary 등)  
 
-export ROS_DOMAIN_ID=3 && ros2 run rmf_demos_tasks dispatch_patrol -F sim_bot -R tinybot1 -p c0
-```
+- **Panel API (`rmf_demos_panel`)**  
+  - Flask 기반 경량 API  
+  - 태스크 제출, 취소, 맵 조회 등 보조 기능  
+
+- **Traffic Editor (`rmf_traffic_editor`)**  
+  - building.yaml 생성 및 편집 도구  
+  - 실제 건물/캠퍼스 맵(`handong.building.yaml`, `clinic.building.yaml` 등) 포함  
+
+- **Docker 환경**  
+  - `docker-compose.yml`을 통한 API 서버, 대시보드, 패널, RMF core 일괄 실행  
+
+---
+
+## 🔀 3. 시스템 아키텍처 & 데이터 흐름
+```mermaid
+flowchart LR
+  subgraph Web
+    Dashboard["RMF-web Dashboard"]
+    Panel["Panel (Flask API)"]
+  end
+
+  subgraph Server
+    FleetManager["Fleet Manager (FastAPI)"]
+    FSM["FSM Waypoint"]
+    Bridges["Bridges (Socket.IO)"]
+    RMFCore["RMF Core"]
+  end
+
+  subgraph RobotSide
+    Robot["로봇 Nav2 스택"]
+  end
+
+  Dashboard <--> Bridges
+  Panel --> FleetManager
+  FleetManager --> FSM
+  FSM --> RMFCore
+  FSM <--> Robot
+  FleetManager <-- RobotState --> RMFCore
