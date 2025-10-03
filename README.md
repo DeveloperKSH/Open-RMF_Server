@@ -26,7 +26,7 @@
 - **인터페이스 (`fleet_manager`)**
   - 작업/경로 지시 전송, 로봇 상태 수집 및 로봇별 상태 관리
   - 좌표계 변환 지원(ex. 한국 좌표계 `EPSG:5174`)
-  - 주요 엔드포인트: `/status`, `/navigate`, `/stop_robot`, , `/action_paths`, `/start_activity`, `/toggle_teleop`, `/sub_robot_state`
+  - 주요 엔드포인트: `/status`, `/navigate`, `/stop_robot`, `/action_paths`, `/start_activity`, `/toggle_teleop`, `/sub_robot_state`
 
 - **외부 브릿지 (`rmf_demos_bridges`)**
   - MQTT/Socket.IO를 통한 클라우드 및 외부 모니터링 연계
