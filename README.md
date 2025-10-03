@@ -49,34 +49,34 @@
 ```mermaid
 flowchart LR
   %% ===== Server Core =====
-  subgraph CoreLayer["Server Core"]
-    Core["rmf_core"]
-    FM["Fleet Manager (FastAPI)"]
-    Bridges["Bridges (Socket.IO / WS)"]
+  subgraph Core["RMF Server Core"]
+    rmfcore["rmf_core"]
+    fm["Fleet Manager (FastAPI)"]
+    bridge["Bridges (Socket.IO)"]
   end
 
-  %% ===== Monitoring & Control =====
-  subgraph Monitoring["Monitoring & Control"]
-    Dash["RMF Web Dashboard"]
-    Panel["RMF Panel"]
-    RViz["RViz (Satellite)"]
+  %% ===== Monitoring =====
+  subgraph Mon["Monitoring & Control"]
+    dash["RMF Web Dashboard"]
+    panel["RMF Panel (Flask)"]
+    rviz["RViz (Satellite)"]
   end
 
   %% ===== Robot Clients =====
   subgraph Clients["Robot Clients (rmf_robot)"]
-    Adapter["fleet_adapter"]
+    adapter["fleet_adapter"]
   end
 
   %% Server internals
-  FM <--> Core
-  Core <--> Bridges
+  rmfcore <--> fm
+  rmfcore <--> bridge
 
-  %% Monitoring
-  Dash <--> Bridges
-  Panel <--> FM
-  RViz <--> Core
+  %% Monitoring paths (증거 기반)
+  dash <--> bridge                 %% Dashboard ⇄ Socket.IO (Bridges)
+  panel <--> adapter               %% Panel ⇄ (ROS 경유) 디스패처/토픽/서비스  ※ 실제로는 adapter 쪽 ROS/디스패처를 통해 상호작용
+  rviz <--> rmfcore                %% RViz ⇄ ROS 토픽 (주로 구독)
 
   %% Server ↔ Robot
-  FM -- "PathRequest" --> Adapter
-  Adapter -- "RobotState" --> FM
+  fm -- "PathRequest / Tasks" --> adapter
+  adapter -- "RobotState / Feedback" --> fm
   ```
