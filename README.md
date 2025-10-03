@@ -81,11 +81,11 @@ flowchart LR
   end
 
   %% Server internals
-  fm -->|Command/TaskReq| core
-  core -->|Plan/Schedule| fm
+  fm -->|Command / TaskReq| core
+  core -->|Plan / Schedule| fm
 
   %% Core ↔ External
-  core -->|ROS Topics (Robot/Fleet/Task)| br
+  core -->|ROS Topics: Robot · Fleet · Task| br
   br -->|Socket.IO Events| web
 
   %% Monitoring (직결)
