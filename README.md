@@ -19,76 +19,79 @@
 ## 🔧 2. 시스템 구성
 
 - **RMF Core (`rmf_core`)**
-  - 다중 로봇 작업 스케줄링과 경로 계획(시스템의 두뇌)
+  - 다중 로봇 작업 스케줄링과 경로 계획
   - 맵/교통 그래프(`building.yaml`)와 상태를 바탕으로 충돌 없는 운행 계산
-  - 계획/스케줄·상태 관련 ROS 토픽 퍼블리시
+  - 계획/스케줄 및 상태 관련 ROS 토픽 퍼블리시
 
-- **Fleet Manager (`rmf_demos_fleet_adapter`)**
-  - 서버↔로봇 허브(FASTAPI 기반)
-  - PathRequest·액티비티 지시 전송, 로봇 상태 수집 및 로봇별 상태 관리
-  - 좌표계 변환 지원(멀티맵/실외·실내 정합)
+- **Fleet Manager (`fleet_manager`)**
+  - 서버↔로봇 인터페이스(FASTAPI 기반)
+  - 작업/경로 지시 전송, 로봇 상태 수집 및 로봇별 상태 관리
+  - 좌표계 변환 지원(한국 좌표계 `EPSG:5174`)
   - 주요 엔드포인트: `/status`, `/navigate`, `/stop_robot`, `/start_activity`, `/toggle_teleop`, `/sub_robot_state`
 
-- **Bridges (`rmf_demos_bridges`)**
-  - ROS 토픽을 Socket.IO 이벤트로 중계
-  - `RobotState`, `FleetState` 등 실시간 스트림을 웹으로 전달
-  - 선택적 GPS/좌표 변환 지원
+- **외부 브리지 (`rmf_demos_bridges`)**
+  - ROS 토픽을 MQTT/Socket.IO로 중계
+  - `RobotState`, `FleetState` 등 텔레메트리 데이터를 실시간 웹으로 전달
 
-- **RMF Web Dashboard (`rmf-web`)**
+- **웹 대시보드 (`rmf-web`)**
   - 메인 관제 UI(태스크 제출/취소·조회)
   - 브리지의 실시간 스트림을 구독하여 상태/경로 모니터링
   - 구성 파일(`main.json`, `dashboard_config.json`)로 접속 엔드포인트 설정
 
-- **RMF Panel (`rmf_demos_panel`)**
-  - 경량 보조 패널(모니터링 + 제어)
+- **웹 패널 (`rmf_demos_panel`)**
+  - 경량 보조 패널(작업 명령 및 로봇/작업 모니터링)
   - ROS 디스패처/토픽/서비스 및 내부 WebSocket으로 상태 수신
-  - 수신 데이터를 Socket.IO로 브라우저에 푸시, 태스크 제출/취소·맵 조회 제공
+  - 수신 데이터를 Socket.IO로 브라우저에 푸시, 작업 명령/취소 및 로봇/작업 상태 제공
 
-- **RMF RViz Visualizer (`rviz` + `rviz_satellite`)**
-  - ROS 네이티브 시각화(맵/포즈/경로/상태)
+- **시각화 툴 (`rviz` + `rviz_satellite`)**
+  - ROS 네이티브 시각화(지도/로봇/경로/스케줄)
   - 위성 지도 오버레이로 실제 지형과 주행을 매칭
-  - 디버깅/운영 보조용 뷰 제공
 
 - **Traffic Editor (`rmf_traffic_editor`)**
-  - `building.yaml` 제작·편집 도구
-  - 실내·외/캠퍼스 지도와 교통 그래프(레벨/레인/도어/리프트) 정의
+  - `building.yaml` 제작/편집 도구
+  - 실내/실외 맵과 교통 그래프(층/경로/인프라) 정의
 
-- **Docker/Compose 실행 환경**
-  - `rmf_core`·Fleet Manager·Bridges·Dashboard·Panel·RViz 일괄 구동
-  - `.env` 및 구성 파일로 포트/네트워크/도메인 설정
+- **Docker 환경**  
+  - 전체 시스템을 컨테이너로 패키징하여 손쉽게 실행·배포 가능
 
 ---
 
 ## 🔀 3. 시스템 아키텍처 & 데이터 흐름
 ```mermaid
 flowchart LR
-  %% ===== Server Core =====
+  %% ----- Server Core -----
   subgraph Core["RMF Server Core"]
     rmfcore["rmf_core"]
-    fm["Fleet Manager (FastAPI)"]
+    fm["Fleet Manager (FastAPI, Interface)"]
+  end
+
+  %% ----- External (robot viewpoint) -----
+  subgraph Ext["External (server-side deploy)"]
     bridge["Bridges (Socket.IO)"]
   end
 
-  %% ===== Monitoring & Control =====
+  %% ----- Monitoring -----
   subgraph Mon["Monitoring & Control"]
     dash["RMF Web Dashboard"]
     panel["RMF Panel (Flask)"]
     rviz["RViz (Satellite)"]
   end
 
-  %% ===== Robot Clients =====
+  %% ----- Robot Clients -----
   subgraph Clients["Robot Clients (rmf_robot)"]
     adapter["fleet_adapter"]
   end
 
   %% Server internals
   rmfcore <--> fm
+
+  %% Core ↔ External
   rmfcore <--> bridge
 
-  %% Monitoring paths (간결/일관)
-  dash <--> bridge        
-  panel <--> rmfcore      
-  rviz <--> rmfcore       
+  %% Monitoring
+  dash <--> bridge
+  panel <--> rmfcore
+  rviz <--> rmfcore
 
   %% Server ↔ Robot
   fm -- "PathRequest" --> adapter
