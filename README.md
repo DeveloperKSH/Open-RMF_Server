@@ -57,43 +57,50 @@
 ## 🔀 3. 시스템 아키텍처 & 데이터 흐름
 ```mermaid
 flowchart LR
-  %% ----- Server Core -----
-  subgraph Core["Server"]
-    core["RMF 코어(스케줄러)"]
-    fm["Fleet Manager (인터페이스)"]
-  end
 
-  %% ----- External (robot viewpoint) -----
-  subgraph Ext["External"]
-    br["Bridges (Socket.IO)"]
-  end
-
-  %% ----- Monitoring -----
+  %% ===== Monitoring (왼쪽 열, 위→아래 고정) =====
   subgraph Mon["Monitoring"]
-    web["RMF Web Dashboard"]
-    panel["RMF Panel (Flask)"]
-    rviz["RViz (Satellite)"]
+    direction TB
+    panel["rmf_panel"]
+    rviz["rviz(satellite)"]
+    dash["rmf_web"]
   end
 
-  %% ----- Robot Clients -----
-  subgraph Client["Robot Clients (rmf_robot)"]
+  %% ===== Server (가운데 열, 위→아래 고정) =====
+  subgraph Core["Server"]
+    direction TB
+    rmfcore["rmf_core"]
+    fm["fleet_manager"]
+  end
+
+  %% ===== External (오른쪽 위 열) =====
+  subgraph Ext["External"]
+    direction TB
+    bridge["MQTT / Socket.IO Bridge"]
+  end
+
+  %% ===== Client (오른쪽 열, 아래) =====
+  subgraph Clients["Client"]
+    direction TB
     adapter["fleet_adapter"]
   end
 
-  %% Server internals
-  fm -->|Command / TaskReq| core
-  core -->|Plan / Schedule| fm
+  %% ---------- Monitoring ↔ Server ----------
+  panel -->|TaskReq| rmfcore
+  rmfcore -->|Status / Summaries| panel
 
-  %% Core ↔ External
-  core -->|ROS Topics: Robot · Fleet · Task| br
-  br -->|Socket.IO Events| web
+  rmfcore -->|ROS Topics| rviz   %% RViz는 주로 구독
 
-  %% Monitoring (직결)
-  panel <-->|TaskReq / Status| core
-  rviz  <-->|ROS Topics| core
+  %% ---------- Server ↔ External ----------
+  rmfcore -->|ROS Topics: robot / fleet / task| bridge
+  bridge -->|Socket.IO events| dash
 
-  %% Server ↔ Robot
-  fm -->|PathRequest| adapter
+  %% ---------- Server 내부(양방향) ----------
+  fm -->|Command / TaskReq| rmfcore
+  rmfcore -->|Plan / Schedule / Status| fm
+
+  %% ---------- Server ↔ Client ----------
+  fm -->|PathRequest / Activity| adapter
   adapter -->|RobotState / Feedback| fm
 ```
 
