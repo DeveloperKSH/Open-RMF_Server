@@ -89,7 +89,7 @@ flowchart LR
   panel -->|TaskReq| rmfcore
   rmfcore -->|Status / Summaries| panel
 
-  rmfcore -->|ROS Topics: Map / TF / Trajectory / Markers| rviz
+  rmfcore -->|ROS Topics: map / trajectory / markers| rviz
 
   %% ---------- Server ↔ External ----------
   rmfcore -->|ROS Topics: robot / fleet / task| bridge
@@ -100,8 +100,8 @@ flowchart LR
   rmfcore -->|Plan / Schedule / Status| fm
 
   %% ---------- Server ↔ Client ----------
-  fm -->|PathRequest / Activity| adapter
-  adapter -->|RobotState / Feedback| fm
+  fm -->|PathRequest| adapter
+  adapter -->|RobotState| fm
 ```
 
 ---
