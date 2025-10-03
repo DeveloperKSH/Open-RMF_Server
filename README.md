@@ -59,41 +59,42 @@
 flowchart LR
   %% ----- Server Core -----
   subgraph Core["Server"]
-    rmfcore["rmf_core"]
-    fm["fleet_manager"]
+    core["RMF 코어(스케줄러)"]
+    fm["Fleet Manager (인터페이스)"]
   end
 
   %% ----- External (robot viewpoint) -----
   subgraph Ext["External"]
-    bridge["MQTT / Socket.IO Bridge"]
+    br["Bridges (Socket.IO)"]
   end
 
   %% ----- Monitoring -----
   subgraph Mon["Monitoring"]
-    dash["rmf_web"]
-    panel["rmf_panel"]
-    rviz["rviz(satellite)"]
+    web["RMF Web Dashboard"]
+    panel["RMF Panel (Flask)"]
+    rviz["RViz (Satellite)"]
   end
 
   %% ----- Robot Clients -----
-  subgraph Clients["Client"]
+  subgraph Client["Robot Clients (rmf_robot)"]
     adapter["fleet_adapter"]
   end
 
   %% Server internals
-  rmfcore <--> fm
+  fm -->|Command/TaskReq| core
+  core -->|Plan/Schedule| fm
 
   %% Core ↔ External
-  rmfcore <--> bridge
+  core -->|ROS Topics (Robot/Fleet/Task)| br
+  br -->|Socket.IO Events| web
 
-  %% Monitoring
-  dash <--> bridge
-  panel <--> rmfcore
-  rviz <--> rmfcore
+  %% Monitoring (직결)
+  panel <-->|TaskReq / Status| core
+  rviz  <-->|ROS Topics| core
 
   %% Server ↔ Robot
-  fm -- "PathRequest" --> adapter
-  adapter -- "RobotState" --> fm
+  fm -->|PathRequest| adapter
+  adapter -->|RobotState / Feedback| fm
 ```
 
 ---
