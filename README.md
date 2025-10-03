@@ -48,33 +48,34 @@
 ## 🔀 3. 시스템 아키텍처 & 데이터 흐름
 ```mermaid
 flowchart LR
-  subgraph CoreLayer["Core Layer"]
-    Core["rmf_core (두뇌: Task 할당 & 경로 계획)"]
-    FleetManager["Fleet Manager (FastAPI API)"]
-    Bridges["Bridges (Socket.IO)"]
+  %% ----- Core Layer -----
+  subgraph CoreLayer["Core Layer / Server"]
+    Core["RMF Core"]
+    FM["Fleet Manager (FastAPI)"]
+    Bridge["Bridges (Socket.IO / WS)"]
   end
 
-  subgraph Monitoring["Monitoring & Control"]
-    Dashboard["RMF Web Dashboard"]
-    RViz["RViz Visualizer (with Satellite)"]
-    Panel["RMF Panel (Flask)"]
+  %% ----- Monitoring -----
+  subgraph Mon["Monitoring & Control"]
+    Dash["RMF Web Dashboard"]
+    Panel["RMF Panel"]
+    RViz["RViz (with Satellite)"]
   end
 
-  subgraph RobotSide["Robot Clients (rmf_robot)"]
+  %% ----- Clients -----
+  subgraph Clients["Robot Clients (rmf_robot)"]
     Adapter["fleet_adapter"]
-    FSM["fsm_waypoint_node"]
   end
 
-  %% 서버 <-> 로봇
-  FleetManager -- "PathRequest" --> Adapter
-  Adapter -- "RobotState" --> FleetManager
+  %% Server internals
+  Core <--> FM
+  Core <--> Bridge
 
-  %% 서버 내부
-  FleetManager <--> Core
-  FleetManager --> Bridges
+  %% Monitoring
+  Dash <--> Bridge
+  Panel <--> FM
+  RViz <--> Core
 
-  %% 모니터링
-  Dashboard <--> Bridges
-  Panel --> FleetManager
-  Core --> RViz
+  %% Server ↔ Robot
+  FM <--> Adapter
   ```
