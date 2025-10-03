@@ -57,16 +57,22 @@ flowchart LR
     FleetManager["Fleet Manager (FastAPI)"]
     FSM["FSM Waypoint"]
     Bridges["Bridges (Socket.IO)"]
-    RMFCore["RMF Core"]
   end
 
   subgraph RobotSide
-    Robot["로봇 Nav2 스택"]
+    Adapter["fleet_adapter (로봇단)"]
+    RobotFSM["fsm_waypoint_node (로봇단)"]
+    Nav2["navigation2_stack"]
+    Robot["배달로봇"]
   end
 
-  Dashboard <--> Bridges
+  Dashboard --> FleetManager
   Panel --> FleetManager
   FleetManager --> FSM
-  FSM --> RMFCore
-  FSM <--> Robot
-  FleetManager <-- RobotState --> RMFCore
+  FSM --> Bridges
+  Bridges --> Adapter
+  Adapter --> RobotFSM
+  RobotFSM --> Nav2
+  Nav2 --> Robot
+  Robot -->|RobotState| Bridges --> FleetManager --> Dashboard
+  ```
