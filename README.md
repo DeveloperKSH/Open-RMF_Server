@@ -48,31 +48,38 @@
 ## 🔀 3. 시스템 아키텍처 & 데이터 흐름
 ```mermaid
 flowchart LR
-  subgraph Web
-    Dashboard["RMF-web Dashboard"]
-    Panel["Panel (Flask API)"]
+  %% 구역 표시
+  subgraph Control[Control (Server)]
+    RMFServer[rmf_server<br/>(Fleet Manager API)]
+    RMFWeb[RMF-web: api-server & dashboard]
   end
 
-  subgraph Server
-    FleetManager["Fleet Manager (FastAPI)"]
-    FSM["FSM Waypoint"]
-    Bridges["Bridges (Socket.IO)"]
+  subgraph RobotSide[RobotSide (Client) — rmf_robot]
+    Adapter[fleet_adapter]
+    FSM[fsm_waypoint_node]
+    Nav2[navigation2_stack]
+    Robot[배달로봇]
   end
 
-  subgraph RobotSide
-    Adapter["fleet_adapter (로봇단)"]
-    RobotFSM["fsm_waypoint_node (로봇단)"]
-    Nav2["navigation2_stack"]
-    Robot["배달로봇"]
+  subgraph External[External]
+    Bridge[MQTT / Socket.IO Bridge]
+    WS[WebSocket Control]
   end
 
-  Dashboard --> FleetManager
-  Panel --> FleetManager
-  FleetManager --> FSM
-  FSM --> Bridges
-  Bridges --> Adapter
-  Adapter --> RobotFSM
-  RobotFSM --> Nav2
-  Nav2 --> Robot
-  Robot -->|RobotState| Bridges --> FleetManager --> Dashboard
+  %% 서버 <-> 로봇단 핵심 인터페이스
+  RMFServer -- "PathRequest" --> Adapter
+  Adapter -- "RobotState" --> RMFServer
+
+  %% rmf_robot 내부 흐름(원래 그림과 동일)
+  Adapter --> FSM
+  FSM -->|Action Client| Nav2
+  Nav2 -->|Result / Feedback| FSM
+  Nav2 -->|TF / Odom| Robot
+
+  %% 외부 텔레메트리(원래 rmf_robot 역할 유지)
+  FSM --> Bridge
+  FSM --> WS
+
+  %% 서버 대시보드 연동
+  RMFServer <--> RMFWeb
   ```
