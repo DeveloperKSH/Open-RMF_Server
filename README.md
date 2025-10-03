@@ -72,10 +72,10 @@ flowchart LR
   rmfcore <--> bridge
 
   %% Monitoring paths (증거 기반)
-  dash <--> bridge                 %% Dashboard ⇄ Socket.IO (Bridges)
-  panel <--> adapter               %% Panel ⇄ (ROS 경유) 디스패처/토픽/서비스  ※ 실제로는 adapter 쪽 ROS/디스패처를 통해 상호작용
-  rviz <--> rmfcore                %% RViz ⇄ ROS 토픽 (주로 구독)
-
+  dash <--> bridge                 
+  panel <--> adapter              
+  rviz <--> rmfcore               
+  
   %% Server ↔ Robot
   fm -- "PathRequest / Tasks" --> adapter
   adapter -- "RobotState / Feedback" --> fm
