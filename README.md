@@ -1,10 +1,10 @@
-# RMF Server (Fleet Management & Coordination)
+# RMF Server (RMF Core & Monitoring)
 
 본 저장소는 **Open-RMF 기반 다중 로봇 관제 시스템**에서 **서버(RMF Server)** 측 코드를 담당하는 패키지 모음입니다.  
 
-- **역할**: 다중 로봇의 상태 수집, 작업/경로 분배, 작업 관리 및 대시보드 연동  
-- **구성**: Fleet Manager(FastAPI API), FSM 기반 Nav2 제어 연동, 브리지(Flask-SocketIO), 패널 API, Traffic Editor, Docker 실행 환경  
-- **활용**: 실내·외 물류 로봇의 중앙 관제 및 다중 로봇 운영 최적화  
+- **역할**: 다중 로봇의 상태 수집, 작업/경로 분배, 작업 관리 및 모니터링 연동  
+- **구성**: 서버 코어(RMF Core), 인터페이스(Fleet Manager), 외부 브릿지(MQTT/Socket.IO), 웹 대시보드(RMF Web), 웹 패널(RMF Panel), 시각화 툴(RViz), 맵 편집기(Traffic Editor), Docker 실행 환경  
+- **활용**: 실내/실외 로봇의 중앙 관제 및 다중 로봇 운영 최적화  
 
 ---
 
@@ -12,24 +12,23 @@
 실외/실내 환경에서 여러 대의 로봇을 효율적으로 관리하려면, 개별 로봇만 잘 움직이는 것만으로는 충분하지 않습니다.  
 - **중앙 관제 서버**가 모든 로봇의 상태를 실시간으로 수집하고, 충돌 없는 경로를 분배해야 함  
 - **웹 대시보드와 연계**하여 운영자가 작업을 명령하고, 실행 상태를 모니터링해야 함  
-- 실외/실내 환경의 다양한 제약(장애물, 지도, 층간 이동 등)을 고려해야 함  
+- 실외/실내 환경의 다양한 제약(장애물, 위험 지역, 층간 이동 등)을 고려해야 함  
 
 ---
 
 ## 🔧 2. 시스템 구성
 
-- **RMF Core (`rmf_core`)**
+- **서버 코어 (`rmf_core`)**
   - 다중 로봇 작업 스케줄링과 경로 계획
   - 맵/교통 그래프(`building.yaml`)와 상태를 바탕으로 충돌 없는 운행 계산
   - 계획/스케줄 및 상태 관련 ROS 토픽 퍼블리시
 
-- **Fleet Manager (`fleet_manager`)**
-  - 서버↔로봇 인터페이스(FASTAPI 기반)
+- **인터페이스 (`fleet_manager`)**
   - 작업/경로 지시 전송, 로봇 상태 수집 및 로봇별 상태 관리
-  - 좌표계 변환 지원(한국 좌표계 `EPSG:5174`)
+  - 좌표계 변환 지원(ex. 한국 좌표계 `EPSG:5174`)
   - 주요 엔드포인트: `/status`, `/navigate`, `/stop_robot`, `/start_activity`, `/toggle_teleop`, `/sub_robot_state`
 
-- **외부 브리지 (`rmf_demos_bridges`)**
+- **외부 브릿지 (`rmf_demos_bridges`)**
   - ROS 토픽을 MQTT/Socket.IO로 중계
   - `RobotState`, `FleetState` 등 텔레메트리 데이터를 실시간 웹으로 전달
 
@@ -47,7 +46,7 @@
   - ROS 네이티브 시각화(지도/로봇/경로/스케줄)
   - 위성 지도 오버레이로 실제 지형과 주행을 매칭
 
-- **Traffic Editor (`rmf_traffic_editor`)**
+- **맵 편집기 (`rmf_traffic_editor`)**
   - `building.yaml` 제작/편집 도구
   - 실내/실외 맵과 교통 그래프(층/경로/인프라) 정의
 
