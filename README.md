@@ -89,7 +89,7 @@ flowchart LR
   panel -->|TaskReq| rmfcore
   rmfcore -->|Status / Summaries| panel
 
-  rmfcore -->|ROS Topics| rviz   %% RViz는 주로 구독
+  rmfcore -->|ROS Topics| rviz   
 
   %% ---------- Server ↔ External ----------
   rmfcore -->|ROS Topics: robot / fleet / task| bridge
