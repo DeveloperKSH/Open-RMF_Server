@@ -60,25 +60,25 @@
 ```mermaid
 flowchart LR
   %% ----- Server Core -----
-  subgraph Core["RMF Server Core"]
+  subgraph Core["Server"]
     rmfcore["rmf_core"]
     fm["Fleet Manager (FastAPI, Interface)"]
   end
 
   %% ----- External (robot viewpoint) -----
-  subgraph Ext["External (server-side deploy)"]
+  subgraph Ext["External"]
     bridge["Bridges (Socket.IO)"]
   end
 
   %% ----- Monitoring -----
-  subgraph Mon["Monitoring & Control"]
+  subgraph Mon["Monitoring"]
     dash["RMF Web Dashboard"]
     panel["RMF Panel (Flask)"]
     rviz["RViz (Satellite)"]
   end
 
   %% ----- Robot Clients -----
-  subgraph Clients["Robot Clients (rmf_robot)"]
+  subgraph Clients["Client"]
     adapter["fleet_adapter"]
   end
 
