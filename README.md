@@ -2,7 +2,7 @@
 
 본 저장소는 **Open-RMF 기반 다중 로봇 관제 시스템**에서 **서버(RMF Server)** 측 코드를 담당하는 패키지 모음입니다.  
 
-- **역할**: 다중 로봇의 상태 수집, 작업/경로 분배, 작업 관리 및 모니터링 연동  
+- **역할**: 다중 로봇의 상태 수집, 작업/경로 스케줄링, 로봇/작업 모니터링 연동  
 - **구성**: 서버 코어(RMF Core), 인터페이스(Fleet Manager), 외부 브릿지(MQTT/Socket.IO), 웹 대시보드(RMF Web), 웹 패널(RMF Panel), 시각화 툴(RViz), 맵 편집기(Traffic Editor), Docker 실행 환경  
 - **활용**: 실내/실외 로봇의 중앙 관제 및 다중 로봇 운영 최적화  
 
@@ -33,14 +33,12 @@
   - `RobotState`, `FleetState` 등 텔레메트리 데이터를 실시간 웹으로 전달
 
 - **웹 대시보드 (`rmf-web`)**
-  - 메인 관제 UI(태스크 제출/취소·조회)
-  - 브리지의 실시간 스트림을 구독하여 상태/경로 모니터링
+  - 메인 관제 UI(작업 명령 및 로봇/작업 모니터링)
   - 구성 파일(`main.json`, `dashboard_config.json`)로 접속 엔드포인트 설정
 
 - **웹 패널 (`rmf_demos_panel`)**
   - 경량 보조 패널(작업 명령 및 로봇/작업 모니터링)
   - ROS 디스패처/토픽/서비스 및 내부 WebSocket으로 상태 수신
-  - 수신 데이터를 Socket.IO로 브라우저에 푸시, 작업 명령/취소 및 로봇/작업 상태 제공
 
 - **시각화 툴 (`rviz` + `rviz_satellite`)**
   - ROS 네이티브 시각화(지도/로봇/경로/스케줄)
@@ -61,19 +59,19 @@ flowchart LR
   %% ----- Server Core -----
   subgraph Core["Server"]
     rmfcore["rmf_core"]
-    fm["Fleet Manager (FastAPI, Interface)"]
+    fm["fleet_manager"]
   end
 
   %% ----- External (robot viewpoint) -----
   subgraph Ext["External"]
-    bridge["Bridges (Socket.IO)"]
+    bridge["MQTT / Socket.IO Bridge"]
   end
 
   %% ----- Monitoring -----
   subgraph Mon["Monitoring"]
-    dash["RMF Web Dashboard"]
-    panel["RMF Panel (Flask)"]
-    rviz["RViz (Satellite)"]
+    dash["rmf_web"]
+    panel["rmf_panel"]
+    rviz["rviz(satellite)"]
   end
 
   %% ----- Robot Clients -----
