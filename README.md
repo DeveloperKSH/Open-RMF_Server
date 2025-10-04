@@ -100,8 +100,8 @@ flowchart LR
   rmfcore -->|Plan / Schedule / Status| fm
 
   %% ---------- Server ↔ Client ----------
-  fm -->|PathRequest| adapter
-  adapter -->|RobotState| fm
+  fm -->|PathRequest / Activity| adapter
+  adapter -->|RobotState / Feedback| fm
 ```
 
 ---
